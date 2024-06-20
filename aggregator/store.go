@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 )
 
 type MemoryStore struct {

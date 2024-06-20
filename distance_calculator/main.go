@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/pttrulez/toll-calc/aggregator/client"
+	"github.com/pttrulez/go-microservices/aggregator/client"
 )
 
 const (
@@ -19,9 +19,17 @@ func main() {
 	svc = NewCalculatorService()
 	svc = NewLogMiddleware(svc)
 
-	kafkaConsumer, err := NewKafkaConsumer(kafkaTopic, svc, client.NewClient(aggregatorEndpoint))
+	httpClient := client.NewHTTPClient(aggregatorEndpoint)
+	grpcClient, err := client.NewGRPCClient(aggregatorEndpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Создаем кафка консьюмер
+	kafkaConsumer, err := NewKafkaConsumer(kafkaTopic, svc, grpcClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Стартуем кафка консьюмер
 	kafkaConsumer.Start()
 }

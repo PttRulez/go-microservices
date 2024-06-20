@@ -1,30 +1,72 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"strconv"
+	"time"
 
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/aggregator/client"
+	"github.com/pttrulez/go-microservices/types"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 func main() {
-	listenAddr := flag.String("listenaddr", ":3000", "The address to listen on for HTTP requests.")
+	httpListenAddr := flag.String("httpaddr", ":3000", "The address to listen on for HTTP requests.")
+	grpcListenAddr := flag.String("grpcaddr", ":3001", "The address to listen on for GRPC requests.")
 	flag.Parse()
 
 	var (
 		store = NewMemortyStore()
 		svc   = NewLogMiddleware(NewInvoiceAggregator(store))
 	)
-	makeHTTPTransport(*listenAddr, svc)
+	go makeGRPCTransport(*grpcListenAddr, svc)
+	// go makeHTTPTransport(*httpListenAddr, svc)
+	time.Sleep(time.Second * 5)
+	c, err := client.NewGRPCClient(*grpcListenAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("GRPC Client created")
+	if _, err = c.Aggregate(context.Background(), &types.AggregateRequest{
+		ObuID: 1,
+		Value: 58.55,
+		Unix:  time.Now().UnixNano(),
+	}); err != nil {
+		log.Fatal(err)
+	}
+	log.Fatal(makeHTTPTransport(*httpListenAddr, svc))
 }
 
-func makeHTTPTransport(listenAddr string, svc Aggregator) {
+func makeGRPCTransport(listenAddr string, svc Aggregator) error {
+	// Make a TCP Listener
+	ln, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return err
+	}
+	defer ln.Close()
+
+	// Make a new GRPC native server with (options)
+	server := grpc.NewServer([]grpc.ServerOption{}...)
+
+	// Register (OUR) GRPC server implementation to the GRPC package.
+	types.RegisterAggregatorServer(server, NewGRPCAggregatorServer(svc))
+	fmt.Println("GRPC Transport is running on port", listenAddr)
+	return server.Serve(ln)
+}
+
+func makeHTTPTransport(listenAddr string, svc Aggregator) error {
+	fmt.Println("HTTP Transport is running on port", listenAddr)
 	http.HandleFunc("/aggregate", handleAggregate(svc))
 	http.HandleFunc("/invoice", handleGetInvoice(svc))
 	http.ListenAndServe(listenAddr, nil)
+	return http.ListenAndServe(listenAddr, nil)
 }
 
 func handleGetInvoice(svc Aggregator) http.HandlerFunc {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 )
 
 type DataProducer interface {

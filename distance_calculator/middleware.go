@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 	"github.com/sirupsen/logrus"
 )
 

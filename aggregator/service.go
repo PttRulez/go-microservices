@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 )
 
 const basePrice = 3.15
@@ -26,10 +26,12 @@ func NewInvoiceAggregator(store Storer) Aggregator {
 	}
 }
 
+// Сохраняет дистанцию в хранилище
 func (i *InvoiceAggregator) AggregateDistance(distance types.Distance) error {
 	return i.store.Insert(distance)
 }
 
+// Рассчитывает инвойс для оплаты дистанции, к-ю проехал автомобиль с OBU на борту
 func (i *InvoiceAggregator) CalcualateInvoice(obuid int) (*types.Invoice, error) {
 	dist, err := i.store.Get(obuid)
 	if err != nil {

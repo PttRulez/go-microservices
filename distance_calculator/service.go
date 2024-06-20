@@ -3,13 +3,14 @@ package main
 import (
 	"math"
 
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 )
 
 type CalculatorServicer interface {
 	CalculateDistance(types.OBUData) (float64, error)
 }
 
+// Сервис для подсчета дистанции, который юзается кафка консьюмером
 type CalculatorService struct {
 	prevPoint []float64
 }

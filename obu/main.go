@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 )
 
 const wsEndpoint = "ws://localhost:8080/ws"
@@ -16,6 +16,7 @@ const sendInterval = time.Second * 5
 
 var r *rand.Rand
 
+// Генерирует мок данные от OBU (от машин)
 func main() {
 	obuids := generateOBUIDS(20)
 	conn, _, err := websocket.DefaultDialer.Dial(wsEndpoint, nil)

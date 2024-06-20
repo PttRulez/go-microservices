@@ -3,10 +3,13 @@ package main
 import (
 	"time"
 
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 	"github.com/sirupsen/logrus"
 )
 
+// логгирует инфу перед тем как там пойдет в аггрегатор
+// миддлвары это просто обертки которые эмулируют вызов функции у оборачиваемой сущности
+// Выполняют свою логику, далее вызывают одноименную функцию у оборачиваемой сущности
 type LogMiddleware struct {
 	next Aggregator
 }
@@ -18,8 +21,9 @@ func NewLogMiddleware(next Aggregator) Aggregator {
 func (m *LogMiddleware) AggregateDistance(distance types.Distance) (err error) {
 	defer func(start time.Time) {
 		logrus.WithFields(logrus.Fields{
-			"took": time.Since(start),
-			"err":  err,
+			"took":     time.Since(start),
+			"err":      err,
+			"distance": distance,
 		}).Info()
 	}(time.Now())
 	err = m.next.AggregateDistance(distance)

@@ -3,14 +3,20 @@ package main
 import (
 	"time"
 
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 	"github.com/sirupsen/logrus"
 )
 
+// Миддлвары это просто обертки которые эмулируют вызов функции у оборачиваемой 
+// сущности. Выполняют свою логику, далее вызывают одноименную функцию у оборачиваемой
+// сущности
 type LogMiddleware struct {
 	next DataProducer
 }
 
+// логгирует инфу перед тем как отдать её в дата продюсер. Она просто оборачивает дата
+// продюсер, выполняет такую же функцию ProduceData и далее вызывает функицю ProduceData
+// у продюсера
 func NewLogMiddleware(next DataProducer) *LogMiddleware {
 	return &LogMiddleware{
 		next: next,

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/pttrulez/toll-calc/types"
+	"github.com/pttrulez/go-microservices/types"
 )
 
 func main() {
@@ -23,7 +23,10 @@ func main() {
 type DataReceiver struct {
 	msgch chan types.OBUData
 	conn  *websocket.Conn
-	prod  DataProducer
+
+	// Продьюсер данных отправляет данные дальше. В нашем случае это кафка
+	// Мы ожидаем, что продьюсер реализует интерфейс DataProducer:
+	prod DataProducer
 }
 
 func NewDataReceiver() (*DataReceiver, error) {
@@ -47,7 +50,9 @@ func (dr *DataReceiver) produceData(data types.OBUData) error {
 	return dr.prod.ProduceData(data)
 }
 
+// Хэндлер для получения данных от OBU
 func (dr *DataReceiver) handleWS(w http.ResponseWriter, r *http.Request) {
+	// создаем websocket соединение
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -59,9 +64,11 @@ func (dr *DataReceiver) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 	dr.conn = conn
 
+	// и запускаем бесконечный цикл для получения данных из сокета
 	go dr.wsReceiveLoop()
 }
 
+// Цикл для получения данных от OBU
 func (dr *DataReceiver) wsReceiveLoop() {
 	for {
 		var data types.OBUData
@@ -69,6 +76,8 @@ func (dr *DataReceiver) wsReceiveLoop() {
 			log.Println("read error:", err)
 			continue
 		}
+
+		// отправляем данные далее в кафку
 		if err := dr.produceData(data); err != nil {
 			fmt.Println("kafka produce error:", err)
 		}
